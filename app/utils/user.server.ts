@@ -32,3 +32,15 @@ export const getOtherUsers = async (userId: string) => {
     },
   })
 }
+
+// app/utils/user.server.ts
+
+// ...
+
+export const getUserById = async (userId: string) => {
+  return await prisma.user.findUnique({
+    where: {
+      id: userId,
+    },
+  })
+}
