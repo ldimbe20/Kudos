@@ -2,16 +2,26 @@
 
 // app/routes/home/kudo.$userId.tsx
 import { json, redirect } from "@remix-run/node";
-import type { LoaderFunction,  } from "@remix-run/node";
+import type { LoaderFunction,  ActionFunction,
+} from "@remix-run/node";
 import { useLoaderData, useActionData } from "@remix-run/react";
 import { getUserById } from "~/utils/user.server";
-import { Portal } from "~/components/portal";
 import { Modal } from "~/components/modal";
 import { getUser } from "~/utils/auth.server";
 import { useState } from "react";
 import { SelectBox } from '~/components/select-box'
 import { colorMap, emojiMap } from "~/utils/constants";
 import { UserCircle } from "~/components/user-circle"
+import { Kudo } from '~/components/kudo'
+import {
+  Color,
+  Emoji,
+  KudoStyle
+} from '@prisma/client'
+import { requireUserId } from '~/utils/auth.server'
+import { createKudo } from '~/utils/kudos.server'
+
+
 
 // ! the route to this file is home/kudo/$userId this component is a child of home, but by using .kudo in
 // !the name of file it add another path directory
@@ -20,6 +30,7 @@ import { UserCircle } from "~/components/user-circle"
 export const loader: LoaderFunction = async ({ request, params }) => {
 	const { userId } = params;
 	const user = await getUser(request);
+  
 
 	if (typeof userId !== "string") {
 		return redirect("/home");
@@ -28,6 +39,41 @@ export const loader: LoaderFunction = async ({ request, params }) => {
 	const recipient = await getUserById(userId);
 	return json({ recipient, user });
 };
+
+export const action: ActionFunction = async ({ request }) => {
+  const userId = await requireUserId(request)
+  // 2
+  const form = await request.formData()
+  const message = form.get('message')
+  const backgroundColor = form.get('backgroundColor')
+  const textColor = form.get('textColor')
+  const emoji = form.get('emoji')
+  const recipientId = form.get('recipientId')
+  // 3
+  if (
+    typeof message !== 'string' ||
+    typeof recipientId !== 'string' ||
+    typeof backgroundColor !== 'string' ||
+    typeof textColor !== 'string' ||
+    typeof emoji !== 'string'
+  ) {
+    return json({ error: `Invalid Form Data` }, { status: 400 })
+  }
+  if (!message.length) {
+    return json({ error: `Please provide a message.` }, { status: 400 })
+  }
+  if (!recipientId.length) {
+    return json({ error: `No recipient found...` }, { status: 400 })
+  }
+  // 4
+  await createKudo(message, userId, recipientId, {
+    backgroundColor: backgroundColor as Color,
+    textColor: textColor as Color,
+    emoji: emoji as Emoji,
+  })
+  // 5
+  return redirect('/home')
+ }
 
 export default function KudoModal() {
 	const actionData = useActionData();
@@ -40,6 +86,8 @@ export default function KudoModal() {
 			emoji: "THUMBSUP",
 		} as KudoStyle,
 	});
+
+  
 
   const handleStyleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>, field: string) => {
     setFormData(data => ({
@@ -131,7 +179,7 @@ const emojis = getOptions(emojiMap)
 				<br />
 				<p className='text-blue-600 font-semibold mb-2'>Preview</p>
 				<div className='flex flex-col items-center md:flex-row gap-x-24 gap-y-2 md:gap-y-0'>
-					{/* The Preview Goes Here */}
+        <Kudo profile={user.profile} kudo={formData} />
 					<div className='flex-1' />
 					<button
 						type='submit'
