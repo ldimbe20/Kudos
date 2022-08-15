@@ -17,3 +17,18 @@ export const createUser = async (user: RegisterForm) => {
   })
   return { id: newUser.id, email: user.email }
 }
+
+export const getOtherUsers = async (userId: string) => {
+  return prisma.user.findMany({
+    where: {
+      id: { not: userId },
+// ! The where filter excludes any documents whose id matches the userId 
+// !parameter. This will be used to grab every user except the currently logged in user.
+    },
+    orderBy: {
+      profile: {
+        firstName: 'asc',
+      },
+    },
+  })
+}
