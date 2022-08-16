@@ -25,6 +25,7 @@ model User {
 type Profile {
   firstName String
   lastName  String
+  department Department @default(MARKETING)
 }
 
 // prisma/schema.prisma

@@ -2,6 +2,22 @@
 import bcrypt from 'bcryptjs'
 import type { RegisterForm } from './types.server'
 import { prisma } from './prisma.server'
+import type{ Profile } from "@prisma/client";
+
+export const updateUser = async (userId: string, profile: Partial<Profile>) => {
+  // ! Partial profile makes all properties in profile optional to fill out, only update what user updates
+  await prisma.user.update({
+    where: {
+      id: userId,
+    },
+    data: {
+      profile: {
+        update: profile,
+      },
+    },
+  });
+};
+
 
 export const createUser = async (user: RegisterForm) => {
   const passwordHash = await bcrypt.hash(user.password, 10)
