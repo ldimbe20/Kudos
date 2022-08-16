@@ -7,6 +7,8 @@ import { json, createCookieSessionStorage, redirect } from '@remix-run/node'
 import { createUser } from './user.server'
 import bcrypt from 'bcryptjs'
 
+// ...
+
 export async function requireUserId(request: Request, redirectTo: string = new URL(request.url).pathname) {
     const session = await getUserSession(request)
     const userId = session.get('userId')
