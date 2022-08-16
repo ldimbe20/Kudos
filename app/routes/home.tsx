@@ -81,7 +81,7 @@ export default function Home() {
       <div className="h-full flex">
         <UserPanel users={users} />
         <div className="flex-1 flex flex-col">
-        <SearchBar profile={user.profile} />
+        <SearchBar  profile={user.profile} />
 
           <div className="flex-1 flex">
             <div className="w-full p-10 flex flex-col gap-y-4">

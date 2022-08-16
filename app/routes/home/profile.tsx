@@ -13,6 +13,8 @@ import { SelectBox } from "~/components/select-box";
 import { validateName } from "~/utils/validators.server";
 import { updateUser } from "~/utils/user.server";
 import type { Department } from "@prisma/client";
+import { ImageUploader } from '~/components/image-uploader'
+
 
 export const loader: LoaderFunction = async ({ request }) => {
 	const user = await getUser(request);
@@ -27,6 +29,7 @@ export const action: ActionFunction = async ({ request }) => {
 	let firstName = form.get("firstName");
 	let lastName = form.get("lastName");
 	let department = form.get("department");
+	
 
 	// 2
 	if (
@@ -68,7 +71,22 @@ export default function ProfileSettings() {
 		firstName: user?.profile?.firstName,
 		lastName: user?.profile?.lastName,
 		department: user?.profile?.department || "MARKETING",
+		profilePicture: user?.profile?.profilePicture || ''
 	});
+
+	const handleFileUpload = async (file: File) => {
+		let inputFormData = new FormData()
+		inputFormData.append('profile-pic', file)
+		const response = await fetch('/avatar', {
+		   method: 'POST',
+		   body: inputFormData
+		})
+		const { imageUrl } = await response.json()
+		setFormData({
+		   ...formData,
+		   profilePicture: imageUrl
+		})
+	  }
 
 	const handleInputChange = (
 		event: React.ChangeEvent<HTMLInputElement>,
@@ -84,6 +102,9 @@ export default function ProfileSettings() {
 					Your Profile
 				</h2>
 				<div className='flex'>
+				<div className="w-1/3">
+                  <ImageUploader onChange={handleFileUpload} imageUrl={formData.profilePicture || ''}/>
+               </div>
 					<div className='flex-1'>
 						<form method='post'>
 							<FormField
