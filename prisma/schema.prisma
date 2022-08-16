@@ -25,7 +25,8 @@ model User {
 type Profile {
   firstName String
   lastName  String
-  department Department @default(MARKETING)
+  department Department? @default(MARKETING)
+  profilePicture String?
 }
 
 // prisma/schema.prisma
