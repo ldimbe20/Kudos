@@ -5,16 +5,15 @@ import { json, redirect } from "@remix-run/node";
 import type { LoaderFunction, ActionFunction } from "@remix-run/node";
 import { useLoaderData } from "@remix-run/react";
 import { Modal } from "~/components/modal";
-import { getUser, requireUserId } from "~/utils/auth.server";
+import { getUser, requireUserId, logout } from "~/utils/auth.server";
 import { useState } from "react";
 import { FormField } from "~/components/form-field";
 import { departments } from "~/utils/constants";
 import { SelectBox } from "~/components/select-box";
 import { validateName } from "~/utils/validators.server";
-import { updateUser } from "~/utils/user.server";
+import { updateUser, deleteUser } from "~/utils/user.server";
 import type { Department } from "@prisma/client";
-import { ImageUploader } from '~/components/image-uploader'
-
+import { ImageUploader } from "~/components/image-uploader";
 
 export const loader: LoaderFunction = async ({ request }) => {
 	const user = await getUser(request);
@@ -29,9 +28,12 @@ export const action: ActionFunction = async ({ request }) => {
 	let firstName = form.get("firstName");
 	let lastName = form.get("lastName");
 	let department = form.get("department");
-	
+	const action = form.get('_action')
+	// if 
 
-	// 2
+
+	switch (action) {
+        case 'save':
 	if (
 		typeof firstName !== "string" ||
 		typeof lastName !== "string" ||
@@ -63,7 +65,14 @@ export const action: ActionFunction = async ({ request }) => {
 
 	// 4
 	return redirect("/home");
-};
+	
+	case 'delete':
+		await deleteUser(userId)
+        return logout(request)	
+	default:
+		return json({ error: `Invalid Form Data` }, { status: 400 });
+	
+}};
 
 export default function ProfileSettings() {
 	const { user } = useLoaderData();
@@ -71,22 +80,22 @@ export default function ProfileSettings() {
 		firstName: user?.profile?.firstName,
 		lastName: user?.profile?.lastName,
 		department: user?.profile?.department || "MARKETING",
-		profilePicture: user?.profile?.profilePicture || ''
+		profilePicture: user?.profile?.profilePicture || "",
 	});
 
 	const handleFileUpload = async (file: File) => {
-		let inputFormData = new FormData()
-		inputFormData.append('profile-pic', file)
-		const response = await fetch('/avatar', {
-		   method: 'POST',
-		   body: inputFormData
-		})
-		const { imageUrl } = await response.json()
+		let inputFormData = new FormData();
+		inputFormData.append("profile-pic", file);
+		const response = await fetch("/avatar", {
+			method: "POST",
+			body: inputFormData,
+		});
+		const { imageUrl } = await response.json();
 		setFormData({
-		   ...formData,
-		   profilePicture: imageUrl
-		})
-	  }
+			...formData,
+			profilePicture: imageUrl,
+		});
+	};
 
 	const handleInputChange = (
 		event: React.ChangeEvent<HTMLInputElement>,
@@ -102,11 +111,19 @@ export default function ProfileSettings() {
 					Your Profile
 				</h2>
 				<div className='flex'>
-				<div className="w-1/3">
-                  <ImageUploader onChange={handleFileUpload} imageUrl={formData.profilePicture || ''}/>
-               </div>
+					<div className='w-1/3'>
+						<ImageUploader
+							onChange={handleFileUpload}
+							imageUrl={formData.profilePicture || ""}
+						/>
+					</div>
 					<div className='flex-1'>
-						<form method='post'>
+						<form
+							method='post'
+							onSubmit={(e) =>
+								!confirm("Are you sure?") ? e.preventDefault() : true
+							}
+						>
 							<FormField
 								htmlFor='firstName'
 								label='First Name'
@@ -129,8 +146,19 @@ export default function ProfileSettings() {
 								value={formData.department}
 								onChange={(e) => handleInputChange(e, "department")}
 							/>
+							<button
+								name='_action'
+								value='delete'
+								className='rounded-xl w-full bg-red-300 font-semibold text-white mt-4 px-16 py-2 transition duration-300 ease-in-out hover:bg-red-400 hover:-translate-y-1'
+							>
+								Delete Account
+							</button>
 							<div className='w-full text-right mt-4'>
-								<button className='rounded-xl bg-yellow-300 font-semibold text-blue-600 px-16 py-2 transition duration-300 ease-in-out hover:bg-yellow-400 hover:-translate-y-1'>
+								<button
+									className='rounded-xl bg-yellow-300 font-semibold text-blue-600 px-16 py-2 transition duration-300 ease-in-out hover:bg-yellow-400 hover:-translate-y-1'
+									name='_action'
+									value='save'
+								>
 									Save
 								</button>
 							</div>
