@@ -65,8 +65,9 @@ model Kudo {
   message     String
   createdAt   DateTime   @default(now())
   style       KudoStyle?
-  author      User       @relation(references: [id], fields: [authorId], "AuthoredKudos")
+  author      User       @relation(references: [id], fields: [authorId], onDelete: Cascade, "AuthoredKudos")
+  // using cascade above so if you delete a user you also delete their kudos
   authorId    String     @db.ObjectId
-  recipient   User       @relation(references: [id], fields: [recipientId], "RecievedKudos")
+  recipient   User       @relation(references: [id], fields: [recipientId], onDelete: Cascade, "RecievedKudos")
   recipientId String     @db.ObjectId
 }

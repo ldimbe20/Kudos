@@ -18,6 +18,12 @@ export const updateUser = async (userId: string, profile: Partial<Profile>) => {
   });
 };
 
+// app/utils/user.server.ts
+// ...
+export const deleteUser = async (id: string) => {
+  await prisma.user.delete({ where: { id } });
+};
+
 
 export const createUser = async (user: RegisterForm) => {
   const passwordHash = await bcrypt.hash(user.password, 10)
